@@ -1,0 +1,4 @@
+Log file created at: 2014/10/26 23:36:11
+Running on machine: TERRY-PC
+Log line format: [IWEF]mmdd hh:mm:ss.uuuuuu threadid file:line] msg
+E1026 23:36:11.601706  9612 train_net.cpp:20] Usage: train_net solver_proto_file [resume_point_file]
