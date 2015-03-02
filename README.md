@@ -29,7 +29,7 @@ Since the image can be of varying sizes, it might be problem when computing the 
   ```
 
 ### Note
-In this code, I turn off the `iscolor` flag in the function call `cvDecodeImage` in [this line](https://github.com/ChenglongChen/caffe-windows/blob/master/src/caffe/layers/compact_data_layer.cpp#L187) and [this line](https://github.com/ChenglongChen/caffe-windows/blob/master/src/caffe/layers/compact_data_layer.cpp#L252). As a result, this layer will convert every image to grayscale. If you wan color one, you can set `iscolor` to `1`.
+In this code, I turn off the `iscolor` flag in the function call `cvDecodeImage` in [this line](https://github.com/ChenglongChen/caffe-windows/blob/master/src/caffe/layers/compact_data_layer.cpp#L187) and [this line](https://github.com/ChenglongChen/caffe-windows/blob/master/src/caffe/layers/compact_data_layer.cpp#L252). As a result, this layer will convert every image to grayscale. If you want color one, you can set `iscolor` to `1`.
 
 ## Realtime data augmentation
 Realtime data augmentation is implemented within the `COMPACT_DATA` layer. It offers:
@@ -102,7 +102,7 @@ layers {
 ### Parameter
 Transformations parameter accepts parameters:
 - `mirror`: horizontal, vertical flipping or both simultaneously
-- `crop_size`: the final size of the image input to the net (after geometric tranformations, the image will be "resized" to this size)
+- `crop_size`: the final size of the image input to the net (after geometric tranformations, the image will be "resized" to this size); *This param has somewhat different meaning than in Caffe, but they both refer to the final size input to the net. In this code, cropping is carried out to simulate resizing; please see the explanation for the params min_scaling_factor \& max_scaling_factor below.*
 - `multiscale`: to enable realtime data augmentation (param kept from the [Princeton's GoogLeNet patch](http://vision.princeton.edu/pvt/GoogLeNet/code/))
 - `debug_display`: display the distorted image and some info for debugging purpose
 - `smooth_filtering`: apply soomth filtering with varying filters (the choice of filters is currently hard coded but you can expose it)
@@ -116,6 +116,8 @@ Transformations parameter accepts parameters:
 - `max_perspective_ratio`: perform random perspective warpping with ratio uniformly sampled from `[-max_perspective_ratio, max_perspective_ratio]`
 - `warp_fillval`: value to fill the border pixels
 
+Here is a concrete example about the geometric transformation. In the above prototxt config, let's say the net encounter an image with original size `48x60`, and the scaling factor for *h*(eight) and *w*(idth) direction is randomly sampled as `0.8` and `1.2`, which corresponds to a ROI of size `60x50` (*h*: `48/0.8=60`, *w*: `60/1.2=50`). In this case, for *h* direction, we will randomly `pad` additional `12` pixels in both side (these pixels will be set to `warp_fillval`); and for *w* direction, will randomly `crop` out extra `10` pixels on both side. With the resulted `60x50` ROI, we will perform random rotation/shearing/perspective warpping in combination using the function `warpPerspectiveOneGo` in `/src/caffe/util/opencv_util.cpp`. The output will then be a transformed image of size `32x32`. This is the image we feed to the net.
+ 
 For a better understanding of the transformation augmentation and the above params, please see `/src/caffe/data_transformer.cpp` (the transformation is implemented here) and `/src/caffe/proto/caffe.proto`.
 
 For transformation augmentation for image classification, I would like to recommend this paper: [Transformation Pursuit for Image Classification](https://hal.inria.fr/hal-00979464/document). The authors have a [project page](http://lear.inrialpes.fr/people/paulin/projects/ITP/) for it.
