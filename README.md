@@ -4,8 +4,9 @@ Based on [@terrychenism](https://github.com/terrychenism)'s [caffe-windows-cudnn
 Note: This implementation here is for my project in [Kaggle National Data Science Bowl](https://www.kaggle.com/c/datasciencebowl). So, some choices in the code maybe specifc to the problem, and don't represent the general one, e.g., stochastic prediction as mentioned below.
 
 ## COMPACT_DATA layer to hold varying size images
-This is adopted from the [Princeton's GoogLeNet patch](http://vision.princeton.edu/pvt/GoogLeNet/code/).
+This is modified from the [Princeton's GoogLeNet patch](http://vision.princeton.edu/pvt/GoogLeNet/code/).
 
+### Usage
 To use this layer, you have to convert the image to compact version of leveldb after building `/bin/convert_imageset_compact.exe` (the usage is the same with `/bin/convert_imageset.exe`).
 
 Since the image can be of varying sizes, it might be problem when computing the mean image for this layer. I use the following method for this issue and it works ok.
@@ -26,6 +27,9 @@ Since the image can be of varying sizes, it might be problem when computing the 
   ```
   ./bin/compute_image_mean.exe path-to-leveldb-32x32 path-to-image-mean-32x32
   ```
+
+### Note
+In this code, I turn off the `iscolor` flag in the function call `cvDecodeImage` in [this line](https://github.com/ChenglongChen/caffe-windows/blob/master/src/caffe/layers/compact_data_layer.cpp#L187) and [this line](https://github.com/ChenglongChen/caffe-windows/blob/master/src/caffe/layers/compact_data_layer.cpp#L252). As a result, this layer will convert every image to grayscale. If you wan color one, you can set `iscolor` to `1`.
 
 ## Realtime data augmentation
 Realtime data augmentation is implemented within the `COMPACT_DATA` layer. It offers:
