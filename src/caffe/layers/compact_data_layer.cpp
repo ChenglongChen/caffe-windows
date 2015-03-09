@@ -60,31 +60,37 @@ void CompactDataLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   CHECK_GE(this->datum_width_, this->transform_param_.crop_size());
   int crop_size = this->transform_param_.crop_size();
 
-  CHECK(this->transform_param_.has_mean_file());
-  this->data_mean_.Reshape(1, this->datum_channels_, crop_size, crop_size);
-  const string& mean_file = this->transform_param_.mean_file();
-  LOG(INFO) << "Loading mean file from" << mean_file;
-  BlobProto blob_proto;
-  ReadProtoFromBinaryFileOrDie(mean_file.c_str(), &blob_proto);
-  this->data_mean_.FromProto(blob_proto);
-  Blob<Dtype> tmp;
-  tmp.FromProto(blob_proto);
-  const Dtype* src_data = tmp.cpu_data();
-  Dtype* dst_data = this->data_mean_.mutable_cpu_data();
-  CHECK_EQ(tmp.num(), 1);
-  CHECK_EQ(tmp.channels(), this->datum_channels_);
-  CHECK_GE(tmp.height(), crop_size);
-  CHECK_GE(tmp.width(), crop_size);
-  int w_off = (tmp.width() - crop_size) / 2;
-  int h_off = (tmp.height() - crop_size) / 2;
-  for (int c = 0; c < this->datum_channels_; c++) {
-    for (int h = 0; h < crop_size; h++) {
-      for (int w = 0; w < crop_size; w++) {
-        int src_idx = (c * tmp.height() + h + h_off) * tmp.width() + w + w_off;
-        int dst_idx = (c * crop_size + h) * crop_size + w;
-        dst_data[dst_idx] = src_data[src_idx];
-      }
-    }
+  // check if we want to have mean
+  if (transform_param_.has_mean_file()) {
+	  //CHECK(this->transform_param_.has_mean_file());
+	  this->data_mean_.Reshape(1, this->datum_channels_, crop_size, crop_size);
+	  const string& mean_file = this->transform_param_.mean_file();
+	  LOG(INFO) << "Loading mean file from" << mean_file;
+	  BlobProto blob_proto;
+	  ReadProtoFromBinaryFileOrDie(mean_file.c_str(), &blob_proto);
+	  this->data_mean_.FromProto(blob_proto);
+	  Blob<Dtype> tmp;
+	  tmp.FromProto(blob_proto);
+	  const Dtype* src_data = tmp.cpu_data();
+	  Dtype* dst_data = this->data_mean_.mutable_cpu_data();
+	  CHECK_EQ(tmp.num(), 1);
+	  CHECK_EQ(tmp.channels(), this->datum_channels_);
+	  CHECK_GE(tmp.height(), crop_size);
+	  CHECK_GE(tmp.width(), crop_size);
+	  int w_off = (tmp.width() - crop_size) / 2;
+	  int h_off = (tmp.height() - crop_size) / 2;
+	  for (int c = 0; c < this->datum_channels_; c++) {
+		  for (int h = 0; h < crop_size; h++) {
+			  for (int w = 0; w < crop_size; w++) {
+				  int src_idx = (c * tmp.height() + h + h_off) * tmp.width() + w + w_off;
+				  int dst_idx = (c * crop_size + h) * crop_size + w;
+				  dst_data[dst_idx] = src_data[src_idx];
+			  }
+		  }
+	  }
+  } else {
+	// Simply initialize an all-empty mean.
+	this->data_mean_.Reshape(1, this->datum_channels_, crop_size, crop_size);
   }
 
   this->mean_ = this->data_mean_.cpu_data();
