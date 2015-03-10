@@ -1,0 +1,220 @@
+name: "LeNet"
+# Training set
+layers {
+  name: "mnist"
+  type: DATA
+  top: "data"
+  top: "label"
+  data_param {
+    source: "mnist-train-leveldb"
+    scale: 0.00390625
+    batch_size: 100
+  }
+  include: { phase: TRAIN }
+}
+# Validation set
+layers {
+  name: "mnist"
+  type: DATA
+  top: "data"
+  top: "label"
+  data_param {
+    source: "mnist-test-leveldb"
+    scale: 0.00390625
+    batch_size: 100
+  }
+  include: { phase: TEST }    
+}
+layers {
+  name: "conv1"
+  type: CONVOLUTION
+  bottom: "data"
+  top: "conv1"
+  blobs_lr: 1
+  blobs_lr: 2
+  convolution_param {
+    num_output: 20
+    kernel_size: 5
+    stride: 1
+    weight_filler {
+      type: "msra"
+	  negative_slope: 1.0
+    }
+    bias_filler {
+      type: "constant"
+	  value: 0
+    }
+  }
+}
+## BN
+layers {
+  bottom: "conv1"
+  top: "conv1_bn"
+  name: "conv1_bn"
+  type: BN
+  blobs_lr: 1
+  blobs_lr: 1
+  blobs_lr: 0
+  blobs_lr: 0
+  weight_decay: 0
+  weight_decay: 0
+  weight_decay: 0
+  weight_decay: 0
+  bn_param {
+	scale_filler {
+	  type: "constant"
+	  value: 1
+	}
+	shift_filler {
+	  type: "constant"
+	  value: 0
+	}
+	moving_average: true
+ }
+}
+layers {
+  name: "prelu1"
+  type: PRELU
+  bottom: "conv1_bn"
+  top: "conv1_bn"
+}
+layers {
+  name: "pool1"
+  type: POOLING
+  bottom: "conv1_bn"
+  top: "pool1"
+  pooling_param {
+    pool: MAX
+    kernel_size: 2
+    stride: 2
+  }
+}
+layers {
+  name: "conv2"
+  type: CONVOLUTION
+  bottom: "pool1"
+  top: "conv2"
+  blobs_lr: 1
+  blobs_lr: 2
+  convolution_param {
+    num_output: 50
+    kernel_size: 5
+    stride: 1
+    weight_filler {
+      type: "msra"
+	  negative_slope: 0.25
+    }
+    bias_filler {
+      type: "constant"
+	  value: 0
+    }
+  }
+}
+## BN
+layers {
+  bottom: "conv2"
+  top: "conv2_bn"
+  name: "conv2_bn"
+  type: BN
+  blobs_lr: 1
+  blobs_lr: 1
+  blobs_lr: 0
+  blobs_lr: 0
+  weight_decay: 0
+  weight_decay: 0
+  weight_decay: 0
+  weight_decay: 0
+  bn_param {
+	scale_filler {
+	  type: "constant"
+	  value: 1
+	}
+	shift_filler {
+	  type: "constant"
+	  value: 0
+	}
+	moving_average: true
+ }
+}
+layers {
+  name: "prelu2"
+  type: PRELU
+  bottom: "conv2_bn"
+  top: "conv2_bn"
+}
+layers {
+  name: "pool2"
+  type: POOLING
+  bottom: "conv2_bn"
+  top: "pool2"
+  pooling_param {
+    pool: MAX
+    kernel_size: 2
+    stride: 2
+  }
+}
+layers {
+  name: "ip1"
+  type: INNER_PRODUCT
+  bottom: "pool2"
+  top: "ip1"
+  blobs_lr: 1
+  blobs_lr: 2
+  inner_product_param {
+    num_output: 500
+    weight_filler {
+      type: "msra"
+	  negative_slope: 0.25
+    }
+    bias_filler {
+      type: "constant"
+	  value: 0
+    }
+  }
+}
+layers {
+  name: "prelu3"
+  type: PRELU
+  bottom: "ip1"
+  top: "ip1"
+}
+layers {
+  name: "ip2"
+  type: INNER_PRODUCT
+  bottom: "ip1"
+  top: "ip2"
+  blobs_lr: 1
+  blobs_lr: 2
+  inner_product_param {
+    num_output: 10
+    weight_filler {
+      type: "msra"
+	  negative_slope: 0.25
+    }
+    bias_filler {
+      type: "constant"
+    }
+  }
+}
+layers {
+  name: "loss"
+  type: SOFTMAX_LOSS
+  bottom: "ip2"
+  bottom: "label"
+  include: { phase: TRAIN }
+}
+layers {
+  name: "prob"
+  type: SOFTMAX
+  bottom: "ip2"
+  top: "prob"
+  include: { phase: TEST }
+}
+layers {
+  name: "accuracy"
+  type: ACCURACY
+  bottom: "prob"
+  bottom: "label"
+  top: "accuracy"
+  include: { phase: TEST }
+}
