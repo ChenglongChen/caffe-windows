@@ -26,8 +26,10 @@ namespace caffe {
 		caffe_gpu_gemv<Dtype>(CblasTrans, num_, channels_, Dtype(1. / num_), spatial_statistic_.gpu_data(),
 			batch_sum_multiplier_.gpu_data(), Dtype(0), batch_statistic_.mutable_gpu_data());
 		// save history mean
-		caffe_gpu_axpby(batch_statistic_.count(), decay_, batch_statistic_.gpu_data(), Dtype(1) - decay_,
-			this->blobs_[2]->mutable_gpu_data());
+		if (Caffe::phase() == Caffe::TRAIN) {
+		    caffe_gpu_axpby(batch_statistic_.count(), decay_, batch_statistic_.gpu_data(), Dtype(1) - decay_,
+			    this->blobs_[2]->mutable_gpu_data());
+		}
 		if (Caffe::phase() == Caffe::TEST && moving_average_) {
 			// use moving average mean
 			caffe_copy(batch_statistic_.count(), this->blobs_[2]->gpu_data(), batch_statistic_.mutable_gpu_data());
@@ -52,8 +54,10 @@ namespace caffe {
 		caffe_gpu_gemv<Dtype>(CblasTrans, num_, channels_, Dtype(1. / num_), spatial_statistic_.gpu_data(),
 			batch_sum_multiplier_.gpu_data(), Dtype(0), batch_statistic_.mutable_gpu_data());
 		// save history variance
-		caffe_gpu_axpby(batch_statistic_.count(), decay_, batch_statistic_.gpu_data(), Dtype(1) - decay_,
-			this->blobs_[3]->mutable_gpu_data());
+		if (Caffe::phase() == Caffe::TRAIN) {
+		    caffe_gpu_axpby(batch_statistic_.count(), decay_, batch_statistic_.gpu_data(), Dtype(1) - decay_,
+			    this->blobs_[3]->mutable_gpu_data());
+		}
 		if (Caffe::phase() == Caffe::TEST && moving_average_) {
 			// use moving average variance
 			caffe_copy(batch_statistic_.count(), this->blobs_[3]->gpu_data(), batch_statistic_.mutable_gpu_data());
