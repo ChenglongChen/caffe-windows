@@ -1,6 +1,8 @@
 # Caffe Windows
 Based on [@terrychenism](https://github.com/terrychenism)'s [caffe-windows-cudnn](https://github.com/terrychenism/caffe-windows-cudnn) with the following major changes.
 
+Linux: Have a look at [@Senecaur](https://github.com/senecaur/caffe-rta)'s version [here](https://github.com/senecaur/caffe-rta). 
+
 Note: This implementation here is for my project in [Kaggle National Data Science Bowl](https://www.kaggle.com/c/datasciencebowl). So, some choices in the code maybe specifc to the problem, and don't represent the general one, e.g., stochastic prediction as mentioned below.
 
 ## COMPACT_DATA layer to hold varying size images
