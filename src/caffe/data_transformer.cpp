@@ -211,7 +211,7 @@ void DataTransformer<Dtype>::TransformMultiple(const int batch_item_id,
   float shearing_ratio_y = Uniform(-max_shearing_ratio, max_shearing_ratio);
 
   // param config for rotation
-  float angle_raw = (float)(Rand() % 360);
+  float angle_raw = Uniform(0, 360);
   float angle_quant = angle_interval * ceil(angle_raw / angle_interval + 0.5);
 
   // param for perspective warpping

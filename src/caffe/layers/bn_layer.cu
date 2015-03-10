@@ -25,6 +25,13 @@ namespace caffe {
 		// statistic across batch
 		caffe_gpu_gemv<Dtype>(CblasTrans, num_, channels_, Dtype(1. / num_), spatial_statistic_.gpu_data(),
 			batch_sum_multiplier_.gpu_data(), Dtype(0), batch_statistic_.mutable_gpu_data());
+		// save history mean
+		caffe_gpu_axpby(batch_statistic_.count(), decay_, batch_statistic_.gpu_data(), Dtype(1) - decay_,
+			this->blobs_[2]->mutable_gpu_data());
+		if (Caffe::phase() == Caffe::TEST && moving_average_) {
+			// use moving average mean
+			caffe_copy(batch_statistic_.count(), this->blobs_[2]->gpu_data(), batch_statistic_.mutable_gpu_data());
+		}
 		// put mean blob into buffer_blob_
 		caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num_, channels_, 1, Dtype(1),
 			batch_sum_multiplier_.gpu_data(), batch_statistic_.gpu_data(), Dtype(0),
@@ -44,6 +51,13 @@ namespace caffe {
 		// statistic across batch
 		caffe_gpu_gemv<Dtype>(CblasTrans, num_, channels_, Dtype(1. / num_), spatial_statistic_.gpu_data(),
 			batch_sum_multiplier_.gpu_data(), Dtype(0), batch_statistic_.mutable_gpu_data());
+		// save history variance
+		caffe_gpu_axpby(batch_statistic_.count(), decay_, batch_statistic_.gpu_data(), Dtype(1) - decay_,
+			this->blobs_[3]->mutable_gpu_data());
+		if (Caffe::phase() == Caffe::TEST && moving_average_) {
+			// use moving average variance
+			caffe_copy(batch_statistic_.count(), this->blobs_[3]->gpu_data(), batch_statistic_.mutable_gpu_data());
+		}
         // add eps
 		caffe_gpu_add_scalar(batch_statistic_.count(), var_eps_, batch_statistic_.mutable_gpu_data());
 		// std

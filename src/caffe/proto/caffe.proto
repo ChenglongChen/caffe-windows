@@ -55,6 +55,7 @@ message FillerParameter {
     INNER_PRODUCT = 1;
   }
   optional LayerType layer_type = 10 [default = CONVOLUTION];
+  optional string source = 11;
 }
 
 message NetParameter {
@@ -608,6 +609,9 @@ message MVNParameter {
 message BNParameter {
   optional FillerParameter scale_filler = 1; // The filler for the scale
   optional FillerParameter shift_filler = 2; // The filler for the shift
+  optional float var_eps = 3 [default = 1e-10]; // The epsilon added to variance
+  optional bool moving_average = 4 [default = false]; // whether or not using moving average for inference
+  optional float decay = 5 [default = 0.95]; // The decay factor for moving average
 }
 
 // Message that stores parameters used by PoolingLayer

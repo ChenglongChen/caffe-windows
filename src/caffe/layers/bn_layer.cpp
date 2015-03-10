@@ -17,7 +17,10 @@ namespace caffe {
 		channels_ = bottom[0]->channels();
 		height_ = bottom[0]->height();
 		width_ = bottom[0]->width();
-		var_eps_ = 1e-10;
+		// extract param
+		var_eps_ = this->layer_param_.bn_param().var_eps();
+		decay_ = this->layer_param_.bn_param().decay();
+		moving_average_ = this->layer_param_.bn_param().moving_average();
 
 		// reshape blob
 		(*top)[0]->Reshape(num_, channels_, height_, width_);
@@ -28,7 +31,7 @@ namespace caffe {
 		spatial_statistic_.Reshape(num_, channels_, 1, 1);
 		batch_statistic_.Reshape(1, channels_, 1, 1);
 
-		// buffer blod
+		// buffer blob
 		buffer_blob_.Reshape(num_, channels_, height_, width_);
 
 		// fill spatial multiplier
@@ -44,7 +47,7 @@ namespace caffe {
 		if (this->blobs_.size() > 0) {
 			LOG(INFO) << "Skipping parameter initialization";
 		} else {
-			this->blobs_.resize(2);			
+			this->blobs_.resize(4);
 
 			// fill scale with scale_filler
 			this->blobs_[0].reset(new Blob<Dtype>(1, channels_, 1, 1));
@@ -57,6 +60,14 @@ namespace caffe {
 			shared_ptr<Filler<Dtype> > shift_filler(GetFiller<Dtype>(
 				this->layer_param_.bn_param().shift_filler()));
 			shift_filler->Fill(this->blobs_[1].get());
+
+			// history mean
+			this->blobs_[2].reset(new Blob<Dtype>(1, channels_, 1, 1));
+			caffe_set(channels_, Dtype(0), this->blobs_[2]->mutable_cpu_data());
+
+			// history variance
+			this->blobs_[3].reset(new Blob<Dtype>(1, channels_, 1, 1));
+			caffe_set(channels_, Dtype(0), this->blobs_[3]->mutable_cpu_data());
 
 		}  // parameter initialization
 		this->param_propagate_down_.resize(this->blobs_.size(), true);
@@ -79,6 +90,13 @@ namespace caffe {
 		// statistic across batch
 		caffe_cpu_gemv<Dtype>(CblasTrans, num_, channels_, Dtype(1. / num_), spatial_statistic_.cpu_data(),
 			batch_sum_multiplier_.cpu_data(), Dtype(0), batch_statistic_.mutable_cpu_data());
+		// save history mean
+		caffe_cpu_axpby(batch_statistic_.count(), decay_, batch_statistic_.cpu_data(), Dtype(1) - decay_,
+			this->blobs_[2]->mutable_cpu_data());
+		if (Caffe::phase() == Caffe::TEST && moving_average_) {
+			// use moving average mean
+			caffe_copy(batch_statistic_.count(), this->blobs_[2]->cpu_data(), batch_statistic_.mutable_cpu_data());
+		}
 		// put mean blob into buffer_blob_
 		caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num_, channels_, 1, Dtype(1),
 			batch_sum_multiplier_.cpu_data(), batch_statistic_.cpu_data(), Dtype(0),
@@ -98,7 +116,14 @@ namespace caffe {
 		// statistic across batch
 		caffe_cpu_gemv<Dtype>(CblasTrans, num_, channels_, Dtype(1. / num_), spatial_statistic_.cpu_data(),
 			batch_sum_multiplier_.cpu_data(), Dtype(0), batch_statistic_.mutable_cpu_data());
-        // add eps
+		// save history variance
+		caffe_cpu_axpby(batch_statistic_.count(), decay_, batch_statistic_.cpu_data(), Dtype(1) - decay_,
+			this->blobs_[3]->mutable_cpu_data());
+		if (Caffe::phase() == Caffe::TEST && moving_average_) {
+			// use moving average variance
+			caffe_copy(batch_statistic_.count(), this->blobs_[3]->cpu_data(), batch_statistic_.mutable_cpu_data());
+		}
+		// add eps
 		caffe_add_scalar(batch_statistic_.count(), var_eps_, batch_statistic_.mutable_cpu_data());
 		// std
 		caffe_powx(batch_statistic_.count(), batch_statistic_.cpu_data(), Dtype(0.5),

@@ -119,6 +119,10 @@ namespace caffe {
 		int width_;
 		// eps
 		Dtype var_eps_;
+		// decay factor
+		Dtype decay_;
+		// whether or not using moving average for inference
+		bool moving_average_;
 
 	};
 
