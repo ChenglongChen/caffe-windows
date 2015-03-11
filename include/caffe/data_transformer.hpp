@@ -75,7 +75,6 @@ class DataTransformer {
  protected:
   virtual unsigned int Rand();
   virtual float Uniform(const float min, const float max);
-  virtual float RandPercent(const int num);
   void TransformSingle(const int batch_item_id, IplImage *img,
                  const Dtype* mean, Dtype* transformed_data);
   void TransformMultiple(const int batch_item_id, IplImage *img,

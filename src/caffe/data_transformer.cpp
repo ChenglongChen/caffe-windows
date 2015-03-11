@@ -416,17 +416,11 @@ unsigned int DataTransformer<Dtype>::Rand() {
 }
 
 template <typename Dtype>
-float DataTransformer<Dtype>::RandPercent(const int num) {
-  CHECK(rng_);
-  float percent = (float)(Rand() % (num+1)) / num;
-  return percent;
-}
-
-template <typename Dtype>
 float DataTransformer<Dtype>::Uniform(const float min, const float max) {
   CHECK(rng_);
-  float d = RandPercent(100) * (max - min) + min;
-  return d;
+  Dtype d[1];
+  caffe_rng_uniform<Dtype>(1, Dtype(min), Dtype(max), d);
+  return (float)d[0];
 }
 
 INSTANTIATE_CLASS(DataTransformer);
