@@ -181,6 +181,51 @@ Batch Normalization is from [here](https://github.com/ChenglongChen/batch_normal
 
 This implementation has be adopted in [this PR to Caffe](https://github.com/BVLC/caffe/pull/1965) (with improvements such as per mini-batch shuffling).
 
+### Usage
+Two additional blobs (besides those for the learnable parameters) are used for storing moving average mean and variance. So set the corresponding `blobs_lr` and `weight_decay` both to `0`, as follows:
+```
+## BN
+layers {
+  bottom: "conv1"
+  top: "conv1_bn"
+  name: "conv1_bn"
+  type: BN
+  blobs_lr: 1
+  blobs_lr: 1
+  blobs_lr: 0
+  blobs_lr: 0
+  weight_decay: 0
+  weight_decay: 0
+  weight_decay: 0
+  weight_decay: 0
+  bn_param {
+    scale_filler {
+      type: "constant"
+      value: 1
+    }
+    shift_filler {
+      type: "constant"
+      value: 0
+    }
+    var_eps: 1e-10
+    moving_average: true
+    decay: 0.95    
+  }
+}
+```
+
+There is an example for BN using mnist in `/examples/mnist`.
+
+### Parameter
+BN parameter accepts parameters:
+- `scale_filler`: filler for the `scale` parameter (`gamma` in the paper)
+- `shift_filler`: filler for the `shift` parameter (`beta` in the paper)
+- `var_eps`: eps to add to the variance to avoid dividing zero (`epsilon` in the paper)
+- `moving_average`: whether or not using exponentially weighted moving average (EWMA) statistics (computed with samples in TRAIN phase) for inference
+- `decay`: decay (discount) factor for EWMA, `S_{t+1} = decay * Y_{t+1} + (1 - decay) * S_{t}`
+
+If you want minibatch statistics for inference, set `moving_average` to `false`.
+
 ## PReLU layer and MSRA filler
 PReLU is adopted from [this PR to Caffe](https://github.com/BVLC/caffe/pull/1940).
 
