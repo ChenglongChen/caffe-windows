@@ -3,7 +3,9 @@ Based on [@terrychenism](https://github.com/terrychenism)'s [caffe-windows-cudnn
 
 Linux: Have a look at [@Senecaur](https://github.com/senecaur/caffe-rta)'s version [here](https://github.com/senecaur/caffe-rta). 
 
-Note: This implementation here is for my project in [Kaggle National Data Science Bowl](https://www.kaggle.com/c/datasciencebowl). So, some choices in the code maybe specifc to the problem, and don't represent the general one, e.g., stochastic prediction as mentioned below.
+Note: This implementation here is for my project in [Kaggle's National Data Science Bowl](https://www.kaggle.com/c/datasciencebowl). So, some choices in the code maybe specifc to the problem, and don't represent the general one, e.g., stochastic prediction as mentioned below.
+
+I have put one of my model for [Kaggle's National Data Science Bowl](https://www.kaggle.com/c/datasciencebowl) in `/examples/kaggle-bowl`.
 
 ## COMPACT_DATA layer to hold varying size images
 This is modified from the [Princeton's GoogLeNet patch](http://vision.princeton.edu/pvt/GoogLeNet/code/).
@@ -101,6 +103,9 @@ layers {
   include: { phase: TEST }
 }
 ```
+
+There is an example using realtime data augmentation for [Kaggle's National Data Science Bowl](https://www.kaggle.com/c/datasciencebowl) in `/examples/kaggle-bowl`.
+
 ### Parameter
 Transformations parameter accepts parameters:
 - `mirror`: horizontal, vertical flipping or both simultaneously

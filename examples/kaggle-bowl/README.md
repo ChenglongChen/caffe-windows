@@ -1,6 +1,8 @@
 # Kaggle's National Data Science Bowl
 
-Example using Caffe with realtime data augmentation for Kaggle's National Data Science Bowl. You should get a logloss about ~0.6xx.
+Example using Caffe with realtime data augmentation for [Kaggle's National Data Science Bowl](https://www.kaggle.com/c/datasciencebowl).
+
+You should get a logloss about ~0.6xx.
 
 ## Instruction
 * download data from the [competition website](https://www.kaggle.com/c/datasciencebowl/data) and put all the data into `./Data` dir. You should have
