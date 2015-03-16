@@ -1,0 +1,36 @@
+net: "vgg_googlenet_maxout_48x48_train_valid.prototxt"
+random_seed: 2222
+#debug_info: true
+
+#solver_type: NESTEROV
+#solver_type: ADAGRAD
+#solver_type: SGD
+solver_type: ADADELTA
+
+# 50 * 6068 is enough to estimate the validation logloss
+# since batch size is 100
+test_iter: 1500
+# use a smaller interval to get the best logloss possible
+test_interval: 1000
+test_initialization: false
+#update_interval: 1
+
+# The base learning rate, momentum and the weight decay of the network.
+base_lr: 1
+momentum: 0.95
+# The learning rate policy
+lr_policy: "step"
+stepsize: 10000
+gamma: 0.92
+
+delta: 1e-8
+
+# The momentum and the weight decay
+weight_decay: 0.0005
+
+display: 100
+average_loss: 100
+max_iter: 500000
+snapshot: 1000
+snapshot_prefix: "D:/ChenglongChen/DL/caffe_accum_grad_multiscale/examples/kaggle-bowl/Output/model/vgg_googlenet_maxout_48x48_seed2222"
+solver_mode: GPU

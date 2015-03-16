@@ -1,0 +1,1075 @@
+name: "DeepOcean"
+
+################
+## HDF5 Layer ##
+################
+##### Handcrafted features and coarse-grained label
+# Training set
+layers {
+  name: "HDF5"
+  type: HDF5_DATA
+  top: "data_hdf5"
+  top: "label_coarse"
+  hdf5_data_param {
+    source: "../../Output/data/hdf5/local_train_hdf5.list"
+    batch_size: 50
+  }
+  include: { phase: TRAIN }
+}
+# Validation set
+layers {
+  name: "HDF5"
+  type: HDF5_DATA
+  top: "data_hdf5"
+  top: "label_coarse"
+  hdf5_data_param {
+    source: "../../Output/data/hdf5/test_hdf5.list"
+    batch_size: 50
+  }
+  include: { phase: TEST }
+}
+
+#### Maxout for HDF5 features ****************
+layers {
+  bottom: "data_hdf5"
+  top: "ip_hdf5"
+  name: "ip_hdf5"
+  type: INNER_PRODUCT
+  blobs_lr: 1
+  blobs_lr: 2
+  weight_decay: 1
+  weight_decay: 0
+  inner_product_param {
+    num_output: 128
+    weight_filler {
+      type: "xavier"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+layers {
+  bottom: "ip_hdf5"
+  top: "ip_hdf5_slice0"
+  top: "ip_hdf5_slice1"
+  name: "ip_hdf5_slice"
+  type: SLICE
+  slice_param {
+    slice_dim: 1
+    slice_point: 64
+  }
+}
+layers {
+  bottom: "ip_hdf5_slice0"
+  bottom: "ip_hdf5_slice1"
+  top: "ip_hdf5_maxout"
+  name: "ip_hdf5_maxout"
+  type: ELTWISE
+  eltwise_param {
+    operation: MAX
+  }
+}
+
+#################
+## Image Layer ##
+#################
+#### Images and fine-grained label
+# Training set
+layers {
+  name: "Image"
+  type: COMPACT_DATA
+  top: "data_fine"
+  top: "label_fine"
+  data_param {
+    source: "../../Output/data/leveldb/compact/local_train_leveldb_compact"
+    batch_size: 50
+  }
+  transform_param {
+    mean_file: "../../Output/data/leveldb/normal/local_train_mean_48x48.binaryproto"
+    mirror: 1
+    crop_size: 48
+	multiscale: true
+	debug_display: false	
+	smooth_filtering: false
+    jpeg_compression: false
+	contrast_adjustment: false
+	min_scaling_factor: 0.75
+	max_scaling_factor: 1.50
+	angle_interval: 1
+	max_shearing_ratio: 0
+	max_perspective_ratio: 0
+  }
+  include: { phase: TRAIN }
+}
+# Validation set
+layers {
+  name: "Image"
+  type: COMPACT_DATA
+  top: "data_fine"
+  top: "label_fine"
+  data_param {
+    source: "../../Output/data/leveldb/compact/test_leveldb_compact"
+    batch_size: 50
+  }
+  transform_param {
+    mean_file: "../../Output/data/leveldb/normal/local_train_mean_48x48.binaryproto"
+    mirror: 1
+    crop_size: 48
+	multiscale: true
+	debug_display: false	
+	smooth_filtering: false
+    jpeg_compression: false
+	contrast_adjustment: false
+	min_scaling_factor: 0.75
+	max_scaling_factor: 1.50
+	angle_interval: 1
+	max_shearing_ratio: 0
+	max_perspective_ratio: 0
+  }
+  include: { phase: TEST }
+}
+
+############
+## CONV 1 ##
+############
+## CONV_1a
+layers {
+  bottom: "data_fine"
+  top: "conv_1a/3x3"
+  name: "conv_1a/3x3"
+  type: CONVOLUTION
+  blobs_lr: 1
+  blobs_lr: 2
+  weight_decay: 1
+  weight_decay: 0
+  convolution_param {
+    num_output: 64
+    kernel_size: 3
+    stride: 1
+    pad: 1
+    weight_filler {
+      type: "xavier"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+## Maxout
+layers {
+  name: "conv_1a/3x3_slice"
+  type: SLICE
+  bottom: "conv_1a/3x3"
+  top: "conv_1a/3x3_slice0"
+  top: "conv_1a/3x3_slice1"
+  slice_param {
+    slice_dim: 1
+    slice_point: 32
+  }
+}
+layers {
+  name: "conv_1a/3x3_maxout"
+  type: ELTWISE
+  bottom: "conv_1a/3x3_slice0"
+  bottom: "conv_1a/3x3_slice1"
+  top: "conv_1a/3x3_maxout"
+  eltwise_param {
+    operation: MAX
+  }
+}
+
+## CONV_1b
+layers {
+  bottom: "conv_1a/3x3_maxout"
+  top: "conv_1b/3x3"
+  name: "conv_1b/3x3"
+  type: CONVOLUTION
+  blobs_lr: 1
+  blobs_lr: 2
+  weight_decay: 1
+  weight_decay: 0
+  convolution_param {
+    num_output: 64
+    kernel_size: 3
+    stride: 1
+    pad: 1
+    weight_filler {
+      type: "xavier"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+## Maxout
+layers {
+  name: "conv_1b/3x3_slice"
+  type: SLICE
+  bottom: "conv_1b/3x3"
+  top: "conv_1b/3x3_slice0"
+  top: "conv_1b/3x3_slice1"
+  slice_param {
+    slice_dim: 1
+    slice_point: 32
+  }
+}
+layers {
+  name: "conv_1b/3x3_maxout"
+  type: ELTWISE
+  bottom: "conv_1b/3x3_slice0"
+  bottom: "conv_1b/3x3_slice1"
+  top: "conv_1b/3x3_maxout"
+  eltwise_param {
+    operation: MAX
+  }
+}
+
+# MaxPool 3x3
+layers {
+  bottom: "conv_1b/3x3_maxout"
+  top: "pool_1/2x2"
+  name: "pool_1/2x2"
+  type: POOLING
+  pooling_param {
+    pool: MAX
+    kernel_size: 2
+    stride: 2
+  }
+}
+
+############
+## CONV 2 ##
+############
+## CONV_2a
+layers {
+  bottom: "pool_1/2x2"
+  top: "conv_2a/3x3"
+  name: "conv_2a/3x3"
+  type: CONVOLUTION
+  blobs_lr: 1
+  blobs_lr: 2
+  weight_decay: 1
+  weight_decay: 0
+  convolution_param {
+    num_output: 128
+    kernel_size: 3
+    stride: 1
+    pad: 1
+    weight_filler {
+      type: "xavier"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+## Maxout
+layers {
+  name: "conv_2a/3x3_slice"
+  type: SLICE
+  bottom: "conv_2a/3x3"
+  top: "conv_2a/3x3_slice0"
+  top: "conv_2a/3x3_slice1"
+  slice_param {
+    slice_dim: 1
+    slice_point: 64
+  }
+}
+layers {
+  name: "conv_2a/3x3_maxout"
+  type: ELTWISE
+  bottom: "conv_2a/3x3_slice0"
+  bottom: "conv_2a/3x3_slice1"
+  top: "conv_2a/3x3_maxout"
+  eltwise_param {
+    operation: MAX
+  }
+}
+
+
+## CONV_2b
+layers {
+  bottom: "conv_2a/3x3_maxout"
+  top: "conv_2b/3x3"
+  name: "conv_2b/3x3"
+  type: CONVOLUTION
+  blobs_lr: 1
+  blobs_lr: 2
+  weight_decay: 1
+  weight_decay: 0
+  convolution_param {
+    num_output: 128
+    kernel_size: 3
+    stride: 1
+    pad: 1
+    weight_filler {
+      type: "xavier"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+## Maxout
+layers {
+  name: "conv_2b/3x3_slice"
+  type: SLICE
+  bottom: "conv_2b/3x3"
+  top: "conv_2b/3x3_slice0"
+  top: "conv_2b/3x3_slice1"
+  slice_param {
+    slice_dim: 1
+    slice_point: 64
+  }
+}
+layers {
+  name: "conv_2b/3x3_maxout"
+  type: ELTWISE
+  bottom: "conv_2b/3x3_slice0"
+  bottom: "conv_2b/3x3_slice1"
+  top: "conv_2b/3x3_maxout"
+  eltwise_param {
+    operation: MAX
+  }
+}
+
+# MaxPool 3x3
+layers {
+  bottom: "conv_2b/3x3_maxout"
+  top: "pool_2/2x2"
+  name: "pool_2/2x2"
+  type: POOLING
+  pooling_param {
+    pool: MAX
+    kernel_size: 2
+    stride: 2
+  }
+}
+
+
+#################
+## INCEPTION 1 ##
+#################
+## Conv 1x1
+layers {
+  bottom: "pool_2/2x2"
+  top: "inception_1/1x1"
+  name: "inception_1/1x1"
+  type: CONVOLUTION
+  blobs_lr: 1
+  blobs_lr: 2
+  weight_decay: 1
+  weight_decay: 0
+  convolution_param {
+    num_output: 128
+    kernel_size: 1
+    weight_filler {
+      type: "xavier"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+# Maxout
+layers {
+  name: "inception_1/1x1_slice"
+  type: SLICE
+  bottom: "inception_1/1x1"
+  top: "inception_1/1x1_slice0"
+  top: "inception_1/1x1_slice1"
+  slice_param {
+    slice_dim: 1
+    slice_point: 64
+  }
+}
+layers {
+  name: "inception_1/1x1_maxout"
+  type: ELTWISE
+  bottom: "inception_1/1x1_slice0"
+  bottom: "inception_1/1x1_slice1"
+  top: "inception_1/1x1_maxout"
+  eltwise_param {
+    operation: MAX
+  }
+}
+
+## Conv 3x3
+# Conv 1x1
+layers {
+  bottom: "pool_2/2x2"
+  top: "inception_1/3x3_reduce"
+  name: "inception_1/3x3_reduce"
+  type: CONVOLUTION
+  blobs_lr: 1
+  blobs_lr: 2
+  weight_decay: 1
+  weight_decay: 0
+  convolution_param {
+    num_output: 128
+    kernel_size: 1
+    weight_filler {
+      type: "xavier"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+# Maxout
+layers {
+  name: "inception_1/3x3_reduce_slice"
+  type: SLICE
+  bottom: "inception_1/3x3_reduce"
+  top: "inception_1/3x3_reduce_slice0"
+  top: "inception_1/3x3_reduce_slice1"
+  slice_param {
+    slice_dim: 1
+    slice_point: 64
+  }
+}
+layers {
+  name: "inception_1/3x3_reduce_maxout"
+  type: ELTWISE
+  bottom: "inception_1/3x3_reduce_slice0"
+  bottom: "inception_1/3x3_reduce_slice1"
+  top: "inception_1/3x3_reduce_maxout"
+  eltwise_param {
+    operation: MAX
+  }
+}
+# Conv 3x3
+layers {
+  bottom: "inception_1/3x3_reduce_maxout"
+  top: "inception_1/3x3"
+  name: "inception_1/3x3"
+  type: CONVOLUTION
+  blobs_lr: 1
+  blobs_lr: 2
+  weight_decay: 1
+  weight_decay: 0
+  convolution_param {
+    num_output: 128
+    kernel_size: 3
+    pad: 1
+    weight_filler {
+      type: "xavier"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+
+## Conv 5x5
+# Conv 1x1
+layers {
+  bottom: "pool_2/2x2"
+  top: "inception_1/5x5_reduce"
+  name: "inception_1/5x5_reduce"
+  type: CONVOLUTION
+  blobs_lr: 1
+  blobs_lr: 2
+  weight_decay: 1
+  weight_decay: 0
+  convolution_param {
+    num_output: 32
+    kernel_size: 1
+    weight_filler {
+      type: "xavier"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+# Maxout
+layers {
+  name: "inception_1/5x5_reduce_slice"
+  type: SLICE
+  bottom: "inception_1/5x5_reduce"
+  top: "inception_1/5x5_reduce_slice0"
+  top: "inception_1/5x5_reduce_slice1"
+  slice_param {
+    slice_dim: 1
+    slice_point: 16
+  }
+}
+layers {
+  name: "inception_1/5x5_reduce_maxout"
+  type: ELTWISE
+  bottom: "inception_1/5x5_reduce_slice0"
+  bottom: "inception_1/5x5_reduce_slice1"
+  top: "inception_1/5x5_reduce_maxout"
+  eltwise_param {
+    operation: MAX
+  }
+}
+# Conv 5x5
+layers {
+  bottom: "inception_1/5x5_reduce_maxout"
+  top: "inception_1/5x5"
+  name: "inception_1/5x5"
+  type: CONVOLUTION
+  blobs_lr: 1
+  blobs_lr: 2
+  weight_decay: 1
+  weight_decay: 0
+  convolution_param {
+    num_output: 32
+    kernel_size: 5
+    pad: 2    
+    weight_filler {
+      type: "xavier"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+
+## MaxPool 3x3
+# MaxPool 3x3
+layers {
+  bottom: "pool_2/2x2"
+  top: "inception_1/pool"
+  name: "inception_1/pool"
+  type: POOLING
+  pooling_param {
+    pool: MAX
+    kernel_size: 3
+    stride: 1
+    pad: 1
+  }
+}
+# Conv 1x1
+layers {
+  bottom: "inception_1/pool"
+  top: "inception_1/pool_proj"
+  name: "inception_1/pool_proj"
+  type: CONVOLUTION
+  blobs_lr: 1
+  blobs_lr: 2
+  weight_decay: 1
+  weight_decay: 0
+  convolution_param {
+    num_output: 32
+    kernel_size: 1
+    weight_filler {
+      type: "xavier"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+
+# DepthConcat
+layers {
+  bottom: "inception_1/1x1_maxout"
+  bottom: "inception_1/3x3"
+  bottom: "inception_1/5x5"
+  bottom: "inception_1/pool_proj"
+  top: "inception_1/output"
+  name: "inception_1/output"
+  type: CONCAT
+}
+
+# Conv 1x1
+layers {
+  bottom: "inception_1/output"
+  top: "inception_1/output_proj"
+  name: "inception_1/output_proj"
+  type: CONVOLUTION
+  blobs_lr: 1
+  blobs_lr: 2
+  weight_decay: 1
+  weight_decay: 0
+  convolution_param {
+    num_output: 256
+    kernel_size: 1
+    weight_filler {
+      type: "xavier"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+
+# Maxout
+layers {
+  name: "inception_1/output_proj_slice"
+  type: SLICE
+  bottom: "inception_1/output_proj"
+  top: "inception_1/output_proj_slice0"
+  top: "inception_1/output_proj_slice1"
+  slice_param {
+    slice_dim: 1
+    slice_point: 128
+  }
+}
+layers {
+  name: "inception_1/output_proj_maxout"
+  type: ELTWISE
+  bottom: "inception_1/output_proj_slice0"
+  bottom: "inception_1/output_proj_slice1"
+  top: "inception_1/output_proj_maxout"
+  eltwise_param {
+    operation: MAX
+  }
+}
+
+# Global Max Pooling
+layers {
+  bottom: "inception_1/output_proj_maxout"
+  top: "inception_1/output_pool"
+  name: "inception_1/output_pool"
+  type: POOLING
+  pooling_param {
+    pool: MAX
+    kernel_size: 2
+    stride: 2
+  }
+}
+
+############
+## CONV 4 ##
+############
+## CONV_4a
+layers {
+  bottom: "inception_1/output_pool"
+  top: "conv_4a/3x3"
+  name: "conv_4a/3x3"
+  type: CONVOLUTION
+  blobs_lr: 1
+  blobs_lr: 2
+  weight_decay: 1
+  weight_decay: 0
+  convolution_param {
+    num_output: 256
+    kernel_size: 3
+    stride: 1
+    pad: 1
+    weight_filler {
+      type: "xavier"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+## Maxout
+layers {
+  name: "conv_4a/3x3_slice"
+  type: SLICE
+  bottom: "conv_4a/3x3"
+  top: "conv_4a/3x3_slice0"
+  top: "conv_4a/3x3_slice1"
+  slice_param {
+    slice_dim: 1
+    slice_point: 128
+  }
+}
+layers {
+  name: "conv_4a/3x3_maxout"
+  type: ELTWISE
+  bottom: "conv_4a/3x3_slice0"
+  bottom: "conv_4a/3x3_slice1"
+  top: "conv_4a/3x3_maxout"
+  eltwise_param {
+    operation: MAX
+  }
+}
+
+## CONV_4b
+layers {
+  bottom: "conv_4a/3x3_maxout"
+  top: "conv_4b/3x3"
+  name: "conv_4b/3x3"
+  type: CONVOLUTION
+  blobs_lr: 1
+  blobs_lr: 2
+  weight_decay: 1
+  weight_decay: 0
+  convolution_param {
+    num_output: 256
+    kernel_size: 3
+    stride: 1
+    pad: 1
+    weight_filler {
+      type: "xavier"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+# Maxout
+layers {
+  name: "conv_4b/3x3_slice"
+  type: SLICE
+  bottom: "conv_4b/3x3"
+  top: "conv_4b/3x3_slice0"
+  top: "conv_4b/3x3_slice1"
+  slice_param {
+    slice_dim: 1
+    slice_point: 128
+  }
+}
+layers {
+  name: "conv_4b/3x3_maxout"
+  type: ELTWISE
+  bottom: "conv_4b/3x3_slice0"
+  bottom: "conv_4b/3x3_slice1"
+  top: "conv_4b/3x3_maxout"
+  eltwise_param {
+    operation: MAX
+  }
+}
+
+# MaxPool 3x3
+layers {
+  bottom: "conv_4b/3x3_maxout"
+  top: "pool_4/2x2"
+  name: "pool_4/2x2"
+  type: POOLING
+  pooling_param {
+    pool: MAX
+    kernel_size: 2
+    stride: 2
+  }
+}
+
+############
+## CONV 5 ##
+############
+## 
+layers {
+  bottom: "pool_4/2x2"
+  top: "conv_5/3x3"
+  name: "conv_5/3x3"
+  type: CONVOLUTION
+  blobs_lr: 1
+  blobs_lr: 2
+  weight_decay: 1
+  weight_decay: 0
+  convolution_param {
+    num_output: 512
+    kernel_size: 3
+    stride: 1
+    pad: 0
+    weight_filler {
+      type: "xavier"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+# Maxout
+layers {
+  name: "conv_5/3x3_slice"
+  type: SLICE
+  bottom: "conv_5/3x3"
+  top: "conv_5/3x3_slice0"
+  top: "conv_5/3x3_slice1"
+  slice_param {
+    slice_dim: 1
+    slice_point: 256
+  }
+}
+layers {
+  name: "conv_5/3x3_maxout"
+  type: ELTWISE
+  bottom: "conv_5/3x3_slice0"
+  bottom: "conv_5/3x3_slice1"
+  top: "conv_5/3x3_maxout"
+  eltwise_param {
+    operation: MAX
+  }
+}
+
+#### Concat for Image and HDF5 features
+layers {
+  name: "feature_concat"
+  type: CONCAT
+  bottom: "conv_5/3x3_maxout"
+  bottom: "ip_hdf5_maxout"
+  top: "feature_concat"
+  concat_param {
+    concat_dim: 1
+  }
+}
+
+###############################
+## Coarse-grained Classifier ##
+###############################
+## Input layer
+layers {
+  bottom: "feature_concat"
+  top: "feature_concat_coarse"
+  name: "feature_concat_coarse_drop"
+  type: DROPOUT
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+
+## 1st hidden layer
+layers {
+  bottom: "feature_concat_coarse"
+  top: "classifier_coarse_ip"
+  name: "classifier_coarse_ip"
+  type: INNER_PRODUCT
+  blobs_lr: 1
+  blobs_lr: 2
+  weight_decay: 1
+  weight_decay: 0
+  inner_product_param {
+    num_output: 512
+    weight_filler {
+      type: "gaussian"
+      std: 0.001
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+# Maxout
+layers {
+  name: "classifier_coarse_ip_slice"
+  type: SLICE
+  bottom: "classifier_coarse_ip"
+  top: "classifier_coarse_ip_slice0"
+  top: "classifier_coarse_ip_slice1"
+  slice_param {
+    slice_dim: 1
+    slice_point: 256
+  }
+}
+layers {
+  name: "classifier_coarse_maxout"
+  type: ELTWISE
+  bottom: "classifier_coarse_ip_slice0"
+  bottom: "classifier_coarse_ip_slice1"
+  top: "classifier_coarse_maxout"
+  eltwise_param {
+    operation: MAX
+  }
+}
+# Dropout
+layers {
+  bottom: "classifier_coarse_maxout"
+  top: "classifier_coarse_maxout"
+  name: "classifier_coarse_maxout_drop"
+  type: DROPOUT
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+
+## 2nd hidden layer
+layers {
+  bottom: "classifier_coarse_maxout"
+  top: "classifier_coarse_score"
+  name: "classifier_coarse_score"
+  type: INNER_PRODUCT
+  blobs_lr: 1
+  blobs_lr: 2
+  weight_decay: 1
+  weight_decay: 0
+  inner_product_param {
+    num_output: 35
+    weight_filler {
+      type: "gaussian"
+      std: 0.001
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+
+## Softmax loss
+layers {
+  name: "loss_coarse"
+  type: SOFTMAX_LOSS
+  bottom: "classifier_coarse_score"
+  bottom: "label_coarse"
+  top: "loss_coarse"
+  loss_weight: 0.5
+}
+
+## Accuracy
+layers {
+  name: "accuracy_coarse"
+  type: ACCURACY
+  bottom: "classifier_coarse_score"
+  bottom: "label_coarse"
+  top: "accuracy_coarse"
+}
+
+#############################
+## Fine-grained Classifier ##
+#############################
+## Inpute layer
+layers {
+  bottom: "feature_concat"
+  bottom: "classifier_coarse_score"
+  top: "feature_concat_fine"
+  name: "feature_concat_fine"
+  type: CONCAT
+  concat_param {
+    concat_dim: 1
+  }
+}
+# Dropout
+layers {
+  bottom: "feature_concat_fine"
+  top: "feature_concat_fine"
+  name: "feature_concat_fine_drop"
+  type: DROPOUT
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+
+## 1st hidden layer
+layers {
+  bottom: "feature_concat_fine"
+  top: "classifier_fine_ip"
+  name: "classifier_fine_ip"
+  type: INNER_PRODUCT
+  blobs_lr: 1
+  blobs_lr: 2
+  weight_decay: 1
+  weight_decay: 0
+  inner_product_param {
+    num_output: 512
+    weight_filler {
+      type: "gaussian"
+      std: 0.001
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+# Maxout
+layers {
+  name: "classifier_fine_ip_slice"
+  type: SLICE
+  bottom: "classifier_fine_ip"
+  top: "classifier_fine_ip_slice0"
+  top: "classifier_fine_ip_slice1"
+  slice_param {
+    slice_dim: 1
+    slice_point: 256
+  }
+}
+layers {
+  name: "classifier_fine_maxout"
+  type: ELTWISE
+  bottom: "classifier_fine_ip_slice0"
+  bottom: "classifier_fine_ip_slice1"
+  top: "classifier_fine_maxout"
+  eltwise_param {
+    operation: MAX
+  }
+}
+# Dropout
+layers {
+  bottom: "classifier_fine_maxout"
+  top: "classifier_fine_maxout"
+  name: "classifier_fine_maxout_drop"
+  type: DROPOUT
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+
+## 2nd hidden layer
+layers {
+  name: "classifier_fine_score"
+  type: INNER_PRODUCT
+  bottom: "classifier_fine_maxout"
+  top: "classifier_fine_score"
+  blobs_lr: 1
+  blobs_lr: 2
+  weight_decay: 1
+  weight_decay: 0
+  inner_product_param {
+    num_output: 121
+    weight_filler {
+      type: "gaussian"
+      std: 0.001
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+
+## Softmax loss
+layers {
+  name: "loss_fine"
+  type: SOFTMAX_LOSS
+  bottom: "classifier_fine_score"
+  bottom: "label_fine"
+  top: "loss_fine"
+  loss_weight: 1
+}
+
+## Accuracy
+layers {
+  name: "accuracy_fine"
+  type: ACCURACY
+  bottom: "classifier_fine_score"
+  bottom: "label_fine"
+  top: "accuracy_fine"
+}
+
+## Prob
+layers {
+  name: "prob"
+  type: SOFTMAX
+  bottom: "classifier_fine_score"
+  top: "prob"
+}
