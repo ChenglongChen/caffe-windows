@@ -27,7 +27,7 @@
 *.mex*
 
 # build, distribute, and bins
-build/*
+#build/*
 distribute/*
 *.testbin
 *.bin
