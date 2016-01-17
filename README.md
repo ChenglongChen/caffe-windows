@@ -227,7 +227,7 @@ BN parameter accepts parameters:
 - `shift_filler`: filler for the `shift` parameter (`beta` in the paper)
 - `var_eps`: eps to add to the variance to avoid dividing zero (`epsilon` in the paper)
 - `moving_average`: whether or not using exponentially weighted moving average (EWMA) statistics (computed with samples in TRAIN phase) for inference
-- `decay`: decay (discount) factor for EWMA, `S_{t+1} = decay * Y_{t+1} + (1 - decay) * S_{t}`
+- `decay`: decay (discount) factor for EWMA, `S_{t+1} = decay * S_{t} + (1 - decay) * Y_{t+1}`
 
 If you want minibatch statistics for inference, set `moving_average` to `false`.
 

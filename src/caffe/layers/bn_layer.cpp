@@ -92,7 +92,7 @@ namespace caffe {
 			batch_sum_multiplier_.cpu_data(), Dtype(0), batch_statistic_.mutable_cpu_data());
 		// save history mean
 		if (Caffe::phase() == Caffe::TRAIN) {
-		    caffe_cpu_axpby(batch_statistic_.count(), decay_, batch_statistic_.cpu_data(), Dtype(1) - decay_,
+		    caffe_cpu_axpby(batch_statistic_.count(), Dtype(1) - decay_, batch_statistic_.cpu_data(), decay_,
 			    this->blobs_[2]->mutable_cpu_data());
 		}
 		if (Caffe::phase() == Caffe::TEST && moving_average_) {
@@ -120,7 +120,7 @@ namespace caffe {
 			batch_sum_multiplier_.cpu_data(), Dtype(0), batch_statistic_.mutable_cpu_data());
 		// save history variance
 		if (Caffe::phase() == Caffe::TRAIN) {
-		    caffe_cpu_axpby(batch_statistic_.count(), decay_, batch_statistic_.cpu_data(), Dtype(1) - decay_,
+		    caffe_cpu_axpby(batch_statistic_.count(), Dtype(1) - decay_, batch_statistic_.cpu_data(), decay_,
 			    this->blobs_[3]->mutable_cpu_data());
 		}
 		if (Caffe::phase() == Caffe::TEST && moving_average_) {
